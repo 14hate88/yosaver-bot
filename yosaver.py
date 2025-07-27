@@ -2,6 +2,8 @@ import os
 import logging
 import urllib.parse
 import re
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from pytube import YouTube
@@ -119,6 +121,22 @@ def main():
 
     print("✅ YoSaver Bot запущен и готов к работе...")
     application.run_polling()
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is alive")
+
+def run_health_check():
+    server = HTTPServer(('0.0.0.0', 8080), HealthCheckHandler)
+    print("Health check server running on port 8080")
+    server.serve_forever()
+
+# Запуск сервера проверки здоровья
+health_check_thread = threading.Thread(target=run_health_check)
+health_check_thread.daemon = True
+health_check_thread.start()
 
 
 if __name__ == '__main__':
